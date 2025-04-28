@@ -1,3 +1,4 @@
 - create .env file,copy content from .env.example to .env
 - npm install
 - npm start
+- use file test.json for testing bulk_import feature
