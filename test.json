@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Test Title",
+    "description": "Test Description",
+    "file_url": "https://example.com/testfile.txt",
+    "price": 10.99
+  },
+  {
+    "title": "Another Title",
+    "description": "Another Description",
+    "file_url": "https://example.com/anotherfile.txt",
+    "price": 15.49
+  },
+  {
+    "title": "Sample Title",
+    "description": "Sample Description",
+    "file_url": "https://example.com/samplefile.txt",
+    "price": 20.0
+  }
+]
