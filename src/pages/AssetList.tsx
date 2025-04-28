@@ -8,10 +8,12 @@ import {
   InputNumber,
   Select,
   Upload,
+  Tooltip,
 } from "antd";
 import axios from "../api/axios";
 import { useEffect, useState } from "react";
 import { UploadOutlined } from "@ant-design/icons";
+import { jwtDecode } from "jwt-decode";
 
 export default function Assets() {
   const [assets, setAssets] = useState([]);
@@ -19,11 +21,32 @@ export default function Assets() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<any[]>([]);
+  const [userRole, setUserRole] = useState<string>("");
 
   useEffect(() => {
     fetchAssets();
     fetchPurchases();
+    getUserRole();
   }, []);
+
+  const getUserRole = () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const decoded: any = jwtDecode(token);
+        setUserRole(decoded.user_role || "");
+      }
+    } catch (error) {
+      console.error("Error decoding token:", error);
+    }
+  };
+
+  const isCustomer = () => {
+    return userRole === "customer";
+  };
+  const isCreator = () => {
+    return userRole === "creator";
+  };
 
   const fetchAssets = () => {
     axios.get("v1/assets").then((res) => {
@@ -43,7 +66,7 @@ export default function Assets() {
     try {
       await axios.post("/v1/purchases", { asset_id: assetId });
       message.success("Purchase successful!");
-      fetchPurchases();
+      fetchAssets();
     } catch {
       message.error("Purchase failed.");
     }
@@ -73,6 +96,45 @@ export default function Assets() {
     }
   };
 
+  const renderActionButton = (asset: any) => {
+    const disabledStyle = !isCustomer()
+      ? { opacity: 0.5, cursor: "not-allowed" }
+      : {};
+
+    if (asset.is_purchased) {
+      return (
+        <Tooltip
+          title={!isCustomer() ? "Only customers can download assets" : ""}
+        >
+          <Button
+            type="link"
+            href={isCustomer() ? asset.file_url : undefined}
+            target="_blank"
+            disabled={!isCustomer()}
+            style={disabledStyle}
+          >
+            Download
+          </Button>
+        </Tooltip>
+      );
+    } else {
+      return (
+        <Tooltip
+          title={!isCustomer() ? "Only customers can purchase assets" : ""}
+        >
+          <Button
+            type="primary"
+            onClick={isCustomer() ? () => handlePurchase(asset.id) : undefined}
+            disabled={!isCustomer()}
+            style={disabledStyle}
+          >
+            Purchase
+          </Button>
+        </Tooltip>
+      );
+    }
+  };
+
   return (
     <div style={{ padding: 24 }}>
       <div
@@ -83,7 +145,11 @@ export default function Assets() {
         }}
       >
         <h1>Assets</h1>
-        <Button type="primary" onClick={() => setIsModalOpen(true)}>
+        <Button
+          type="primary"
+          onClick={() => setIsModalOpen(true)}
+          disabled={!isCreator()}
+        >
           Bulk Import Assets
         </Button>
       </div>
@@ -93,21 +159,12 @@ export default function Assets() {
           <Card key={asset.id} title={asset.title} style={{ width: 300 }}>
             <p>{asset.description}</p>
             <p>Price: ${asset.price}</p>
-
-            {asset.is_purchased ? (
-              <Button type="link" href={asset.file_url} target="_blank">
-                Download
-              </Button>
-            ) : (
-              <Button type="primary" onClick={() => handlePurchase(asset.id)}>
-                Purchase
-              </Button>
-            )}
+            {renderActionButton(asset)}
           </Card>
         ))}
       </div>
 
-      {/* Modal để thêm Asset */}
+      {/* Modal for Bulk Import */}
       <Modal
         title="Bulk Import Assets"
         open={isModalOpen}
@@ -124,7 +181,7 @@ export default function Assets() {
             <Upload
               fileList={fileList}
               onChange={({ fileList: newFileList }) => setFileList(newFileList)}
-              beforeUpload={() => false} // Ngừng upload tệp tự động
+              beforeUpload={() => false} // Prevent automatic upload
               accept=".json"
             >
               <Button icon={<UploadOutlined />}>Select JSON File</Button>
