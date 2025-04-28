@@ -28,7 +28,7 @@ export default function PurchasesList() {
   const fetchPurchases = async () => {
     try {
       const response = await axios.get("/v1/purchases"); // hoặc sửa URL đúng của bạn
-      setPurchases(response.data);
+      setPurchases(response.data.purchases);
     } catch (error) {
       console.error("Failed to fetch purchases:", error);
     }

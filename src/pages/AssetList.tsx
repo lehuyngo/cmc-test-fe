@@ -51,7 +51,7 @@ export default function Assets() {
   const fetchAssets = () => {
     axios.get("v1/assets").then((res) => {
       console.log("asset", res);
-      setAssets(res.data);
+      setAssets(res.data.assets);
     });
   };
 
